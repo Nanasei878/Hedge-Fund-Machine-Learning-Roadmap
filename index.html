@@ -31,10 +31,15 @@
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
-            height: 350px;
+            height: 300px;
             max-height: 400px;
         }
-        @media (min-width: 768px) {
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        @media (min-width: 1024px) {
             .chart-container {
                 height: 400px;
             }
@@ -48,7 +53,7 @@
             margin-left: -1em;
         }
         .kpi-list li::before {
-            content: '🎯';
+            content: '�';
             display: inline-block;
             width: 1em;
             margin-left: -1em;
@@ -68,31 +73,31 @@
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Hedge Fund Machine Learning Roadmap</h1>
-            <p class="mt-2 text-lg text-slate-600">An interactive 12-month guide to building a quantitative strategy.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Hedge Fund Machine Learning Roadmap</h1>
+            <p class="mt-2 text-base md:text-lg text-slate-600">An interactive 12-month guide to building a quantitative strategy.</p>
         </header>
 
         <main>
-            <div id="navigation" class="mb-8 flex justify-center border-b border-slate-200">
-                <button data-quarter="1" class="tab active text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 1</button>
-                <button data-quarter="2" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 2</button>
-                <button data-quarter="3" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 3</button>
-                <button data-quarter="4" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 4</button>
+            <div id="navigation" class="mb-8 flex flex-wrap justify-center border-b border-slate-200">
+                <button data-quarter="1" class="tab active text-base sm:text-lg py-3 px-4 sm:py-4 sm:px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 1</button>
+                <button data-quarter="2" class="tab text-base sm:text-lg py-3 px-4 sm:py-4 sm:px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 2</button>
+                <button data-quarter="3" class="tab text-base sm:text-lg py-3 px-4 sm:py-4 sm:px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 3</button>
+                <button data-quarter="4" class="tab text-base sm:text-lg py-3 px-4 sm:py-4 sm:px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 4</button>
             </div>
 
             <div id="content-area">
                 <section id="quarter-goal" class="text-center mb-8 p-6 bg-white rounded-lg shadow-sm">
-                    <h2 class="text-2xl font-semibold text-slate-900 mb-2"></h2>
-                    <p class="text-slate-600 max-w-3xl mx-auto"></p>
+                    <h2 class="text-xl md:text-2xl font-semibold text-slate-900 mb-2"></h2>
+                    <p class="text-sm md:text-base text-slate-600 max-w-3xl mx-auto"></p>
                 </section>
 
                 <section id="months-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 </section>
 
-                <section id="kpi-visualization" class="p-6 bg-white rounded-lg shadow-sm">
-                    <h3 class="text-2xl font-semibold text-center mb-4 text-slate-900">Quarterly KPI Targets</h3>
+                <section id="kpi-visualization" class="p-4 sm:p-6 bg-white rounded-lg shadow-sm">
+                    <h3 class="text-xl md:text-2xl font-semibold text-center mb-4 text-slate-900">Quarterly KPI Targets</h3>
                     <div class="chart-container">
                         <canvas id="kpiChart"></canvas>
                     </div>
@@ -353,3 +358,4 @@
     </script>
 </body>
 </html>
+�
