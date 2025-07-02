@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 12-Month ML Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Corporate -->
+    <!-- Application Structure Plan: The application uses a top-level tabbed navigation for the four quarters, creating a phased, dashboard-like experience. This structure was chosen to break down the dense 12-month plan into manageable, high-level stages, preventing information overload. Users can see the overarching goal for each quarter and then click on a specific month to drill down into details (tasks and KPIs). This hierarchical approach is more intuitive and user-friendly than a long, linear scroll. A dynamic chart is included to visualize quantitative KPIs, which updates on quarter selection, providing an immediate, graphical summary of progress targets. This version adds a third level of granularity: a week-by-week plan within each month's card. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Quarterly structure -> Goal: Organize -> Viz/Method: Tabbed Navigation (HTML/Tailwind/JS) -> Interaction: Click -> Justification: Provides clear, high-level segmentation of the year-long project.
+        - Report Info: Monthly Tasks/KPIs -> Goal: Inform -> Viz/Method: Accordion/Collapsible Cards (HTML/Tailwind/JS) -> Interaction: Click -> Justification: Shows details on demand, reducing clutter and focusing the user's attention.
+        - Report Info: Weekly Breakdown -> Goal: Inform -> Viz/Method: Nested collapsible section within month cards -> Interaction: Click on month card -> Justification: Provides maximum detail without cluttering the initial view.
+        - Report Info: Quantitative KPIs (e.g., Feature Count, Sharpe Ratio) -> Goal: Compare/Change -> Viz/Method: Bar Chart (Chart.js/Canvas) -> Interaction: Updates on Quarter Tab Click -> Justification: Makes numerical targets visual, tangible, and easy to compare across months within a quarter.
+        - Report Info: Qualitative/Textual KPIs -> Goal: Inform -> Viz/Method: Styled Lists (HTML/Tailwind) -> Interaction: Static display within cards -> Justification: Clear and direct presentation for non-numerical targets. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab.active {
+            border-color: #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .task-list li::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: bold;
+            display: inline-block; 
+            width: 1em;
+            margin-left: -1em;
+        }
+        .kpi-list li::before {
+            content: '🎯';
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+        .week-plan h6 {
+            font-weight: 600;
+            color: #475569;
+            margin-top: 0.75rem;
+        }
+        .week-plan ul {
+            list-style-type: disc;
+            list-style-position: inside;
+            padding-left: 0.5rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Hedge Fund Machine Learning Roadmap</h1>
+            <p class="mt-2 text-lg text-slate-600">An interactive 12-month guide to building a quantitative strategy.</p>
+        </header>
+
+        <main>
+            <div id="navigation" class="mb-8 flex justify-center border-b border-slate-200">
+                <button data-quarter="1" class="tab active text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 1</button>
+                <button data-quarter="2" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 2</button>
+                <button data-quarter="3" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 3</button>
+                <button data-quarter="4" class="tab text-lg py-4 px-6 border-b-2 border-transparent transition-colors duration-300 hover:text-blue-500">Quarter 4</button>
+            </div>
+
+            <div id="content-area">
+                <section id="quarter-goal" class="text-center mb-8 p-6 bg-white rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-semibold text-slate-900 mb-2"></h2>
+                    <p class="text-slate-600 max-w-3xl mx-auto"></p>
+                </section>
+
+                <section id="months-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                </section>
+
+                <section id="kpi-visualization" class="p-6 bg-white rounded-lg shadow-sm">
+                    <h3 class="text-2xl font-semibold text-center mb-4 text-slate-900">Quarterly KPI Targets</h3>
+                    <div class="chart-container">
+                        <canvas id="kpiChart"></canvas>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const roadmapData = {
+            1: {
+                goal: "Build the necessary data and technology infrastructure, establish a research framework, and develop an initial proof-of-concept model.",
+                months: [
+                    {
+                        month: 1, name: "Setup & Data Infrastructure",
+                        tasks: ["Meet with PMs", "Finalize tech stack", "Establish data pipelines", "Configure research environment"],
+                        kpis: ["Data Pipeline Uptime: >99.5%", "Tech Stack Approval: 100%", "Strategy Hypotheses: 5+"],
+                        weekly: [
+                            "<strong>Week 1: Onboarding & Strategy:</strong> Meet with senior PMs to align on risk/return. Review existing strategies. Brainstorm 5+ hypotheses.",
+                            "<strong>Week 2: Technology Stack:</strong> Evaluate cloud providers and data solutions. Present tech stack proposal to IT for approval.",
+                            "<strong>Week 3: Core Data Pipelines:</strong> Finalize vendor contracts. Develop and test ingestion scripts for market data. Set up data quality checks.",
+                            "<strong>Week 4: Research Environment:</strong> Deploy JupyterHub and establish Git repository structure. Onboard team to new environment."
+                        ]
+                    },
+                    {
+                        month: 2, name: "Alt Data & Feature Engineering",
+                        tasks: ["Explore alt data", "Build alt data pipelines", "Develop feature store", "Build backtesting engine"],
+                        kpis: ["Vetted Alt Datasets: 3+", "Feature Engineering Velocity: 20+", "Backtester Accuracy: Replicate known strategy"],
+                        weekly: [
+                            "<strong>Week 1: Alt Data Sourcing:</strong> Research and contact vendors for satellite, credit card, and sentiment data. Analyze samples.",
+                            "<strong>Week 2: Alt Data Pipelines:</strong> Build ingestion pipelines for the top-vetted alternative dataset. Develop cleaning scripts.",
+                            "<strong>Week 3: Feature Store & Engineering:</strong> Design feature store schema. Create 10 features from traditional data and 10 from alt data.",
+                            "<strong>Week 4: Backtesting Framework:</strong> Code core backtester logic. Implement transaction costs. Validate by replicating a known strategy."
+                        ]
+                    },
+                    {
+                        month: 3, name: "First Proof-of-Concept (PoC)",
+                        tasks: ["Develop PoC model", "Run initial backtest", "Present to committee", "Draft governance framework"],
+                        kpis: ["PoC Sharpe Ratio: > 1.0", "Model Documentation: 100%", "Committee Feedback: Positive"],
+                        weekly: [
+                            "<strong>Week 1: Model Development:</strong> Select primary model (e.g., LightGBM). Train model on initial 20 features.",
+                            "<strong>Week 2: Backtesting & Analysis:</strong> Run full backtest on 5-10 years of data. Calculate key performance metrics.",
+                            "<strong>Week 3: Reporting & Presentation:</strong> Prepare detailed report on methodology and performance. Present findings to investment committee.",
+                            "<strong>Week 4: Governance & Documentation:</strong> Write comprehensive documentation for model and data. Draft model validation policy."
+                        ]
+                    }
+                ],
+                chartData: { labels: ["Month 1", "Month 2", "Month 3"], datasets: [{ label: "New Features", data: [0, 20, 20], backgroundColor: 'rgba(59, 130, 246, 0.7)' }, { label: "Vetted Datasets", data: [0, 3, 3], backgroundColor: 'rgba(16, 185, 129, 0.7)' }] }
+            },
+            2: {
+                goal: "Refine the initial model, expand the feature set, and begin testing the strategy in a simulated environment.",
+                months: [
+                     {
+                        month: 4, name: "Model Iteration & Expansion",
+                        tasks: ["Incorporate feedback", "Add 30+ new features", "Hyperparameter tuning", "Explore alternative models"],
+                        kpis: ["Sharpe Ratio Improvement: 15%+", "Feature Store Size: 50+", "Model Types Tested: 2+"],
+                        weekly: [
+                            "<strong>Week 1: Incorporate Feedback & Expand Features:</strong> Refine model based on committee suggestions. Add 15 new traditional features.",
+                            "<strong>Week 2: Add More Alt-Data Features:</strong> Add 15 new features from alternative data. Analyze feature importance.",
+                            "<strong>Week 3: Hyperparameter Tuning:</strong> Use Bayesian optimization to find best model parameters. Rerun backtests.",
+                            "<strong>Week 4: Explore Alternative Models:</strong> Begin developing a secondary model (e.g., LSTM) for comparison."
+                        ]
+                    },
+                    {
+                        month: 5, name: "Robustness & Paper Trading",
+                        tasks: ["Perform robustness checks", "Set up paper trading account", "Develop signal generation code", "Define risk rules"],
+                        kpis: ["Successful Walk-Forward Validation", "Paper Trading Latency: < 1s", "Risk Rules Defined & Approved"],
+                        weekly: [
+                            "<strong>Week 1: Walk-Forward Validation:</strong> Implement walk-forward testing to better simulate live trading. Analyze consistency.",
+                            "<strong>Week 2: Sensitivity Analysis:</strong> Test model's sensitivity to changes in transaction costs and market regimes.",
+                            "<strong>Week 3: Paper Trading Setup:</strong> Work with brokerage to set up simulated account. Develop API connections.",
+                            "<strong>Week 4: Signal Generation & Risk Rules:</strong> Finalize code translating predictions to signals. Implement stop-loss rules."
+                        ]
+                    },
+                    {
+                        month: 6, name: "Live Paper Trading",
+                        tasks: ["Deploy to paper trading", "Track performance vs. backtest", "Analyze transaction costs", "Refine signal logic"],
+                        kpis: ["Paper vs. Backtest Correlation: > 0.8", "Simulated Slippage: < 5bps", "Critical Bugs in Pipeline: 0"],
+                        weekly: [
+                            "<strong>Weeks 1-4: Monitor & Analyze:</strong> Deploy to paper trading. Hold daily stand-ups to review trades. Track slippage and compare P&L against backtest. Fix bugs and refine logic."
+                        ]
+                    }
+                ],
+                chartData: { labels: ["Month 4", "Month 5", "Month 6"], datasets: [{ label: "Total Features", data: [50, 50, 50], backgroundColor: 'rgba(59, 130, 246, 0.7)' }, { label: "Sharpe Ratio Improvement (%)", data: [15, 15, 15], backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }
+            },
+            3: {
+                goal: "Deploy the first strategy with a small capital allocation, enhance the ML operations (MLOps) pipeline, and begin research on a second strategy.",
+                months: [
+                    {
+                        month: 7, name: "Limited Capital Deployment",
+                        tasks: ["Gain final approval", "Deploy to live with small allocation", "Create real-time dashboard", "Finalize incident response plan"],
+                        kpis: ["Capital Allocated: e.g., $5M", "Live Sharpe Ratio: Tracked", "Dashboard Uptime: > 99.9%"],
+                        weekly: [
+                            "<strong>Week 1: Final Approval & Setup:</strong> Present paper trading results to committee. Get sign-off for live deployment. Set up live environment.",
+                            "<strong>Week 2: Go Live:</strong> Deploy model to live with initial capital. Intensively monitor the first live trades.",
+                            "<strong>Week 3: Monitoring Dashboard:</strong> Build and deploy a real-time dashboard showing P&L, positions, and risk metrics.",
+                            "<strong>Week 4: Incident Response:</strong> Finalize and test the incident response plan for model failures."
+                        ]
+                    },
+                    {
+                        month: 8, name: "MLOps and Automation",
+                        tasks: ["Automate retraining pipeline", "Implement concept drift monitoring", "Scale data infrastructure", "Research Strategy #2"],
+                        kpis: ["Retraining Effort Reduction: 80%", "Concept Drift Alerts: Test successful", "Strategy #2 Hypotheses: 3+"],
+                        weekly: [
+                            "<strong>Week 1: Automated Retraining Pipeline:</strong> Build script for automated model retraining, validation, and deployment.",
+                            "<strong>Week 2: Concept Drift Monitoring:</strong> Implement statistical tests to monitor data distributions. Set up automated alerts.",
+                            "<strong>Week 3: Strategy #2 Research:</strong> Begin data sourcing and initial analysis for a second, uncorrelated strategy.",
+                            "<strong>Week 4: Scale Infrastructure:</strong> Upgrade data storage and compute resources for the second strategy."
+                        ]
+                    },
+                    {
+                        month: 9, name: "Review & Capital Increase",
+                        tasks: ["Conduct performance review", "Request larger capital allocation", "Refine risk limits", "Build PoC for Strategy #2"],
+                        kpis: ["Live P&L: Positive", "Capital Increase: 50-100%", "Strategy #2 Sharpe Ratio: > 1.0"],
+                        weekly: [
+                            "<strong>Week 1: Performance Analysis:</strong> Prepare comprehensive report on the first three months of live trading.",
+                            "<strong>Week 2: Capital Increase Request:</strong> Present performance report to committee and request larger allocation.",
+                            "<strong>Week 3: Strategy #2 PoC:</strong> Develop the proof-of-concept model for the second strategy.",
+                            "<strong>Week 4: Backtest Strategy #2:</strong> Run initial backtest for Strategy #2 and analyze its performance."
+                        ]
+                    }
+                ],
+                chartData: { labels: ["Month 7", "Month 8", "Month 9"], datasets: [{ label: "Capital Allocated ($M)", data: [5, 5, 10], backgroundColor: 'rgba(16, 185, 129, 0.7)' }, { label: "Manual Effort Reduction (%)", data: [0, 80, 80], backgroundColor: 'rgba(245, 158, 11, 0.7)' }] }
+            },
+            4: {
+                goal: "Scale the capital of the first strategy, deploy the second strategy, and build a portfolio of ML-driven strategies.",
+                months: [
+                   {
+                        month: 10, name: "Scaling & Portfolio Construction",
+                        tasks: ["Scale Strategy #1 capital", "Develop portfolio risk framework", "Paper trade Strategy #2", "Implement advanced features"],
+                        kpis: ["Capital Under ML Mgmt: New Target", "Strategy #2 Correlation: > 0.8", "Advanced Features: 10+"],
+                        weekly: [
+                            "<strong>Week 1: Scale Strategy #1:</strong> Gradually deploy the increased capital allocation for the first strategy.",
+                            "<strong>Week 2: Portfolio Risk Framework:</strong> Develop model to manage risk across multiple ML strategies.",
+                            "<strong>Week 3: Paper Trade Strategy #2:</strong> Deploy the second strategy to the paper trading environment.",
+                            "<strong>Week 4: Advanced Feature Research:</strong> Explore and begin implementing features from NLP or graph analytics."
+                        ]
+                    },
+                    {
+                        month: 11, name: "Deploy Strategy #2 & Optimize",
+                        tasks: ["Deploy Strategy #2 live", "Develop execution meta-model", "Analyze cross-strategy correlation", "Plan team growth"],
+                        kpis: ["Live ML Strategies: 2", "Portfolio Correlation: < 0.3", "Execution Cost Reduction: 10%"],
+                        weekly: [
+                            "<strong>Week 1: Deploy Strategy #2 Live:</strong> After successful paper trading, get approval and deploy Strategy #2 live.",
+                            "<strong>Week 2: Execution Optimization:</strong> Begin developing a meta-model to predict best trade execution times.",
+                            "<strong>Week 3: Cross-Strategy Analysis:</strong> Monitor live correlation between the two strategies to ensure diversification.",
+                            "<strong>Week 4: Team Growth Planning:</strong> Assess team workload and draft job description for a new data scientist."
+                        ]
+                    },
+                    {
+                        month: 12, name: "Year-End Review & Future",
+                        tasks: ["Present annual performance", "Quantify alpha contribution", "Develop next 12-month roadmap", "Share knowledge firm-wide"],
+                        kpis: ["Total P&L: Meet Target", "Alpha Contribution: Positive", "Next Roadmap Approval: 100%"],
+                        weekly: [
+                            "<strong>Week 1: Annual Performance Report:</strong> Compile report on P&L and alpha generated by the ML portfolio.",
+                            "<strong>Week 2: Leadership Presentation:</strong> Present annual results to the firm's leadership.",
+                            "<strong>Week 3: Plan Next Year's Roadmap:</strong> Outline goals, new strategies, and resource needs for the upcoming year.",
+                            "<strong>Week 4: Knowledge Sharing:</strong> Conduct a presentation for the wider firm to share insights and build support."
+                        ]
+                    }
+                ],
+                chartData: { labels: ["Month 10", "Month 11", "Month 12"], datasets: [{ label: "Live Strategies", data: [1, 2, 2], backgroundColor: 'rgba(59, 130, 246, 0.7)' }, { label: "Execution Cost Reduction (%)", data: [0, 10, 10], backgroundColor: 'rgba(139, 92, 246, 0.7)' }] }
+            }
+        };
+
+        let kpiChart;
+
+        function renderMonthCard(monthData) {
+            return `
+                <div class="month-card bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="p-5">
+                        <p class="text-sm font-semibold text-blue-600">MONTH ${monthData.month}</p>
+                        <h4 class="text-xl font-bold text-slate-800 mt-1">${monthData.name}</h4>
+                    </div>
+                    <div class="details hidden bg-slate-50 p-5 border-t border-slate-200">
+                        <div class="week-plan space-y-3 text-sm">
+                            ${monthData.weekly.map(week => `<p>${week}</p>`).join('')}
+                        </div>
+                        <hr class="my-4">
+                        <h5 class="font-semibold text-slate-700 mb-2">Key KPIs:</h5>
+                        <ul class="kpi-list list-inside space-y-2 text-slate-600 text-sm">
+                            ${monthData.kpis.map(kpi => `<li>${kpi}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateChart(quarter) {
+            const chartData = roadmapData[quarter].chartData;
+            if (kpiChart) {
+                kpiChart.data.labels = chartData.labels;
+                kpiChart.data.datasets = chartData.datasets;
+                kpiChart.update();
+            } else {
+                const ctx = document.getElementById('kpiChart').getContext('2d');
+                kpiChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, grid: { color: '#e2e8f0' } }, x: { grid: { display: false } } },
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                enabled: true, mode: 'index', intersect: false, backgroundColor: '#1e293b',
+                                titleFont: { weight: 'bold' }, bodyFont: { size: 14 }, padding: 12, cornerRadius: 4,
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function updateContent(quarter) {
+            const data = roadmapData[quarter];
+            if (!data) return;
+
+            document.querySelector('#quarter-goal h2').textContent = `Goal for Quarter ${quarter}`;
+            document.querySelector('#quarter-goal p').textContent = data.goal;
+
+            const monthsContainer = document.getElementById('months-container');
+            monthsContainer.innerHTML = data.months.map(renderMonthCard).join('');
+            
+            updateChart(quarter);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navigation = document.getElementById('navigation');
+            const monthsContainer = document.getElementById('months-container');
+
+            navigation.addEventListener('click', (e) => {
+                if (e.target.matches('.tab')) {
+                    const quarter = e.target.dataset.quarter;
+                    navigation.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                    e.target.classList.add('active');
+                    updateContent(quarter);
+                }
+            });
+
+            monthsContainer.addEventListener('click', (e) => {
+                const cardHeader = e.target.closest('.month-card');
+                if (cardHeader) {
+                    const details = cardHeader.querySelector('.details');
+                    const wasHidden = details.classList.contains('hidden');
+                    
+                    document.querySelectorAll('.month-card .details').forEach(d => d.classList.add('hidden'));
+                    
+                    if(wasHidden) {
+                       details.classList.remove('hidden');
+                    }
+                }
+            });
+
+            updateContent(1);
+        });
+    </script>
+</body>
+</html>
